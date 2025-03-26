@@ -1,9 +1,11 @@
 package service
 
+//go:generate go run github.com/vektra/mockery/v2@v2.53.3 --name=Producer
 type Producer interface {
 	Produce() ([]string, error)
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.53.3 --name=Presenter
 type Presenter interface {
 	Present([]string) error
 }

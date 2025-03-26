@@ -2,28 +2,15 @@ package service
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/mock"
 )
 
-type MockProducer struct {
-	mock.Mock
+type MockProducer interface {
+	MockProduce() ([]string, error)
 }
 
-//Мок для продюсур
-func (m *MockProducer) Produce() ([]string, error) {
-	args := m.Called()
-	return args.([]string), args.Error(1)
-}
 
-type MockPresenter struct {
-	mock.Mock
-}
-
-//Мок для пресентер
-func (m *MockPresenter) Present(data []string) error {
-	args := m.Called()
-	return args.Error(0)
+type MockPresenter interface{
+	MockPresent([]string) error
 }
 
 //Проверка метода Run
@@ -42,3 +29,24 @@ assert.Nil(t, err)
 
 mockProducer.AssertExpectations(t)
 mockPresenter.AssertExpectations(t)
+
+func TestService_Mask(t *testing.T) {
+
+	tests := []struct {
+		name   string
+		input string
+		want   string
+	}{
+		{"Mask short text", "abc", "*"},
+		{"Mask longer text", "Hello World", "*"},
+		{"Mask empty string", "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Service{}
+			if got := s.Mask(tt.input); got != tt.want {
+				t.Errorf("Mask() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
