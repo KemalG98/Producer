@@ -1,37 +1,58 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"log"
+	"os"
 	"src/service"
 )
 
 func main() {
-	// Определяем флаг для пути к входному файлу
-	inputPath := flag.String("input", "", "Path to input file (required)")
-	flag.Parse()
+	// Проверка наличия аргументов
+	if len(os.Args) < 3 {
+		log.Fatal("Применяем: go run main.go inputPath outputPath")
+	}
+	var inputPath string
+	var outputPath string
+	// Уточнен ли выходной файл
+	var outputSpecified bool
+
+	// Обработка аргументов Input, Output
+	for i := 1; i < len(os.Args); i++ {
+		switch os.Args[i] {
+		case "input":
+			if i+1 < len(os.Args) {
+				inputPath = os.Args[i+1]
+				i++
+			} else {
+				log.Fatal("Input должен быть уточнен")
+			}
+		case "output":
+			if i+1 < len(os.Args) {
+				outputPath = os.Args[i+1]
+				outputSpecified = true
+				i++
+			}
+		}
+	}
 
 	// Проверка обязательного аргумента
-	if *inputPath == "" {
-		log.Fatal("Input file path must be specified.")
+	if inputPath == "" {
+		log.Fatal("Input должен быть уточнен.")
 	}
 	// Выводим, если выходной файл не указан
-	outputPath := flag.String("output", "", "Path to output file (required)")
-	if *outputPath == "" {
-		log.Println("No output path specified, using default: output.txt")
+	if !outputSpecified {
+		outputPath = "output.txt"
+		log.Println("Не уточнен выхоной файл,используем стандартный: output.txt")
 	} else {
-		log.Printf("Using output file: %s\n", *outputPath)
+		log.Println("Используем указаный выходной файл: %s\n", outputPath)
 	}
-	// Определяем флаги командной строки для ввода и вывода
-	inputPath = flag.String("input", "input.txt", "Path to input file")
-	outputPath = flag.String("output", "output.txt", "Path to output file")
-
-	// Парсим флаги командной строки(анализ)
-	flag.Parse()
+	fmt.Printf("Input file: %s\n", inputPath)
+	fmt.Printf("Output file: %s\n", outputPath)
 
 	// Создаем экземпляры FileProducer и FilePresenter с заданными путями
-	producer := &service.FileProducer{FilePath: *inputPath}
-	presenter := &service.FilePresenter{FilePath: *outputPath}
+	producer := &service.FileProducer{FilePath: inputPath}
+	presenter := &service.FilePresenter{FilePath: outputPath}
 
 	// Создаем сервис
 	var svc = service.NewService(producer, presenter) // Запускаем сервис

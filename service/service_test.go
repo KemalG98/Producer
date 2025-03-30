@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -8,38 +9,38 @@ type MockProducer interface {
 	MockProduce() ([]string, error)
 }
 
-
-type MockPresenter interface{
+type MockPresenter interface {
 	MockPresent([]string) error
 }
 
-//Проверка метода Run
+// Проверка метода Run
 func TestService_Run(t *testing.T) {
 	mockProducer := new(MockProducer)
 	mockPresenter := new(MockPresenter)
+
+	service := NewService(mockProducer, mockPresenter)
+	_ = []string{"http://Some text"}
+	mockProducer.On("Produce").Return("http://Some text", nil)
+	mockPresenter.On("Present", []string{"http://Some text"}).Return(nil)
+
+	err := service.Run()
+	assert.Nil(t, err)
+
+	mockProducer.AssertExpectations(t)
+	mockPresenter.AssertExpectations(t)
 }
-
-service := NewService(mockProducer, mockPresenter)
-inputData := []string{"http://Some text"}
-mockProducer.On("Produce").Return("http://Some text", nil)
-mockPresenter.On("Present", []string{"http://Some text"}).Return(nil)
-
-err := service.Run()
-assert.Nil(t, err)
-
-mockProducer.AssertExpectations(t)
-mockPresenter.AssertExpectations(t)
-
 func TestService_Mask(t *testing.T) {
 
 	tests := []struct {
-		name   string
+		name  string
 		input string
-		want   string
+		want  string
 	}{
-		{"Mask short text", "abc", "*"},
-		{"Mask longer text", "Hello World", "*"},
+		{"Mask letters", "http://Some text", "http://**** ****"},
+		{"Mask numbers", "http://123", "http://***"},
 		{"Mask empty string", "", ""},
+		{"Mask *", "http://****", "http://****"},
+		{"Mask special characters", "http://&$!@", "http://****"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
