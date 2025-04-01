@@ -2,26 +2,27 @@ package service
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 )
 
-type MockProducer interface {
-	MockProduce() ([]string, error)
+type MockProducer struct {
+	mock.Mock
 }
 
-type MockPresenter interface {
-	MockPresent([]string) error
+type MockPresenter struct {
+	mock.Mock
 }
 
 // Проверка метода Run
 func TestService_Run(t *testing.T) {
 	mockProducer := new(MockProducer)
 	mockPresenter := new(MockPresenter)
-
 	service := NewService(mockProducer, mockPresenter)
-	_ = []string{"http://Some text"}
+
+	urls := []string{"http://Some text"}
 	mockProducer.On("Produce").Return("http://Some text", nil)
-	mockPresenter.On("Present", []string{"http://Some text"}).Return(nil)
+	mockPresenter.On("Present", urls).Return(nil)
 
 	err := service.Run()
 	assert.Nil(t, err)
