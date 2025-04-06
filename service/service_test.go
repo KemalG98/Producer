@@ -2,26 +2,18 @@ package service
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"src/service/mocks"
 	"testing"
 )
 
-type MockProducer struct {
-	mock.Mock
-}
-
-type MockPresenter struct {
-	mock.Mock
-}
-
 // Проверка метода Run
 func TestService_Run(t *testing.T) {
-	mockProducer := new(MockProducer)
-	mockPresenter := new(MockPresenter)
+	mockProducer := new(mocks.Producer)
+	mockPresenter := new(mocks.Presenter)
 	service := NewService(mockProducer, mockPresenter)
 
 	urls := []string{"http://Some text"}
-	mockProducer.On("Produce").Return("http://Some text", nil)
+	mockProducer.On("Produce").Return(urls, nil)
 	mockPresenter.On("Present", urls).Return(nil)
 
 	err := service.Run()
@@ -37,11 +29,11 @@ func TestService_Mask(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"Mask letters", "http://Some text", "http://**** ****"},
-		{"Mask numbers", "http://123", "http://***"},
+		{"Mask letters", "http://Some text", "http://****************"},
+		{"Mask numbers", "http://123", "http://**********"},
 		{"Mask empty string", "", ""},
-		{"Mask *", "http://****", "http://****"},
-		{"Mask special characters", "http://&$!@", "http://****"},
+		{"Mask *", "http://****", "http://***********"},
+		{"Mask special characters", "http://&$!@", "http://***********"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
