@@ -1,5 +1,9 @@
 package service
 
+import (
+	"sync"
+)
+
 //go:generate go run github.com/vektra/mockery/v2@v2.53.3 --name=Producer
 type Producer interface {
 	Produce() ([]string, error)
@@ -13,10 +17,11 @@ type Presenter interface {
 type Service struct {
 	prod Producer
 	pres Presenter
+	mu   sync.Mutex
 }
 
 func NewService(prod Producer, pres Presenter) *Service {
-	return &Service{prod, pres}
+	return &Service{prod: prod, pres: pres}
 }
 
 func (s *Service) Mask(data string) string {
@@ -51,9 +56,38 @@ func (s *Service) Run() error {
 	if err != nil {
 		return err
 	}
-	for i := range data {
-		data[i] = s.Mask(data[i])
-	}
 
+	// Канал для input инфармации
+	inputChannel := make(chan string)
+
+	// Канал для результата
+	resultChannel := make(chan string)
+
+	var wg sync.WaitGroup
+
+	//Цикл на 10 экземпляров
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for text := range inputChannel {
+				masked := s.Mask(text)
+				resultChannel <- masked
+			}
+		}()
+	}
+	//Отправляем data в inputChannel
+	go func() {
+		defer close(inputChannel)
+		for _, text := range data {
+			inputChannel <- text
+		}
+	}()
+	// Закрываем resultChannel после выполнения
+	go func() {
+		wg.Wait()
+		close(resultChannel)
+	}()
+	//Возвращаем в Presenter маскираванную data
 	return s.pres.Present(data)
 }
