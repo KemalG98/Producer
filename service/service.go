@@ -17,7 +17,6 @@ type Presenter interface {
 type Service struct {
 	prod Producer
 	pres Presenter
-	mu   sync.Mutex
 }
 
 func NewService(prod Producer, pres Presenter) *Service {
@@ -64,6 +63,7 @@ func (s *Service) Run() error {
 	resultChannel := make(chan string)
 
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 
 	//Цикл на 10 экземпляров
 	for i := 0; i < 10; i++ {
@@ -72,6 +72,8 @@ func (s *Service) Run() error {
 			defer wg.Done()
 			for text := range inputChannel {
 				masked := s.Mask(text)
+				mu.Lock()
+				defer mu.Unlock()
 				resultChannel <- masked
 			}
 		}()
