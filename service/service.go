@@ -73,8 +73,8 @@ func (s *Service) Run() error {
 			for text := range inputChannel {
 				masked := s.Mask(text)
 				mu.Lock()
-				defer mu.Unlock()
 				resultChannel <- masked
+				mu.Unlock()
 			}
 		}()
 	}
